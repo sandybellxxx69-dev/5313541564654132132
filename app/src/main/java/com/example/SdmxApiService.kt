@@ -74,7 +74,7 @@ class SdmxApiService {
             val vigentes = mutableListOf<SheetsUser>()
             val noVigentes = mutableListOf<SheetsUser>()
             
-            val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+            val sdf = SimpleDateFormat("dd-MM-yyyy", Locale.US)
             
             val todayCal = Calendar.getInstance().apply {
                 set(Calendar.HOUR_OF_DAY, 0)
@@ -93,7 +93,15 @@ class SdmxApiService {
                 )
                 
                 try {
-                    val fechaVec = sdf.parse(user.vencimiento)
+                    // Limpiamos la cadena por si acaso trae espacios extra o formatos raros
+                    val fechaLimpia = user.vencimiento.trim().substringBefore("T")
+                    var fechaVec = try {
+                        sdf.parse(fechaLimpia)
+                    } catch (e: Exception) {
+                        // Respaldo por si Apps Script manda "yyyy-MM-dd" o ISO
+                        SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(fechaLimpia)
+                    }
+                    
                     if (fechaVec != null && !fechaVec.before(todayCal)) {
                         vigentes.add(user)
                     } else {
